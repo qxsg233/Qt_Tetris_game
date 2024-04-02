@@ -10,9 +10,11 @@ CONFIG += c++17
 
 SOURCES += \
     main.cpp \
+    tetristablewidget.cpp \
     widget.cpp
 
 HEADERS += \
+    tetristablewidget.h \
     widget.h
 
 FORMS += \

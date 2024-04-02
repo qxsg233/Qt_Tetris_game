@@ -19,5 +19,6 @@ public:
 
 private:
     Ui::Widget *ui;
+    quint16* mp_tableValue;
 };
 #endif // WIDGET_H
