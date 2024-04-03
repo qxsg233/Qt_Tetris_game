@@ -1,12 +1,13 @@
-#include "tetristablewidget.h"
+#include "nextblocktablewidget.h"
 #include <QHeaderView>
 #include <QDebug>
 #include <QBrush>
-TetrisTableWidget::TetrisTableWidget(QWidget *parent)
+#include "block.h"
+NextBlockTableWidget::NextBlockTableWidget(QWidget *parent)
     : QTableWidget{parent}
 {
-    this->setRowCount(TABLE_ROW_COUNT);
-    this->setColumnCount(TABLE_COLUMN_COUNT);
+    this->setRowCount(5);
+    this->setColumnCount(5);
     this->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     this->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     this->horizontalHeader()->setVisible(false);
@@ -23,30 +24,40 @@ TetrisTableWidget::TetrisTableWidget(QWidget *parent)
     }
     this->resizeColumnsToContents();
     int cellWidth = this->columnWidth(0);
-    for(int i=0; i<TABLE_ROW_COUNT; i++)
+    for(int i=0; i<5; i++)
     {
         this->setRowHeight(i, cellWidth);
-        for(int j=0; j<TABLE_COLUMN_COUNT; j++)
+        for(int j=0; j<5; j++)
         {
             mp_items[i][j] = new QTableWidgetItem();
-            this->setItem(TABLE_ROW_COUNT-i-1, TABLE_COLUMN_COUNT-j-1, mp_items[i][j]);
+            this->setItem(5-i-1, 5-j-1, mp_items[i][j]);
         }
     }
 }
 
-TetrisTableWidget::~TetrisTableWidget()
+NextBlockTableWidget::~NextBlockTableWidget()
 {
     this->clear();
 }
 
-void TetrisTableWidget::updateTable(quint16 *data)
+void NextBlockTableWidget::updateBlock(int state)
+{
+    quint16 temp[5]{0};
+    for(int i=0; i<5; i++)
+    {
+        temp[i] = blockTable[state][i]>>2;
+    }
+    updateTable(temp);
+}
+
+void NextBlockTableWidget::updateTable(quint16 *data)
 {
     if(!data)
         return;
-    for(int i=0; i<TABLE_ROW_COUNT; i++)
+    for(int i=0; i<5; i++)
     {
         quint16 tempValue = data[i];
-        for(int j=0; j<TABLE_COLUMN_COUNT; j++)
+        for(int j=0; j<5; j++)
         {
             quint16 temp = 0x01;
             temp = temp<<j;
@@ -60,29 +71,5 @@ void TetrisTableWidget::updateTable(quint16 *data)
                 mp_items[i][j]->setBackground(QBrush(QColor(122, 58, 35)));
             }
         }
-    }
-}
-
-void TetrisTableWidget::keyPressEvent(QKeyEvent *event)
-{
-    switch (event->key()) {
-    case Qt::Key_Up:
-        // slot_pushButton_revolve_onClicked();
-        emit signal_out_keyPress_up();
-        break;
-    case Qt::Key_Left:
-        // slot_pushButton_left_onClicked();
-        emit signal_out_keyPress_left();
-        break;
-    case Qt::Key_Right:
-        // slot_pushButton_right_onClicked();
-        emit signal_out_keyPress_right();
-        break;
-    case Qt::Key_Down:
-        // slot_pushButton_down_onClicked();
-        emit signal_out_keyPress_down();
-        break;
-    default:
-        break;
     }
 }

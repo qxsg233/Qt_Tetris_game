@@ -24,11 +24,20 @@ ActiveBlock::~ActiveBlock()
     mp_limitValue = NULL;
 }
 
-void ActiveBlock::updateNewBlock()
+void ActiveBlock::init()
+{
+    for(int i=0; i<TABLE_ROW_COUNT; i++)
+    {
+        mp_blockValue[i] = 0x0000;
+        mp_limitValue[i] = 0x0000;
+    }
+}
+
+void ActiveBlock::updateNewBlock(int state)
 {
     m_pos.x = TABLE_COLUMN_COUNT/2-1;
     m_pos.y = TABLE_ROW_COUNT-1;
-    m_pos.state = 36;
+    m_pos.state = state;
     updateBlockValue();
 }
 
@@ -73,7 +82,7 @@ void ActiveBlock::blockRevolve()
         state = -3;
     else
         state = 1;
-    qDebug()<<m_pos.state<<state;
+    qDebug()<<QString("x=%1,y=%2,state=%3,in=%4").arg(m_pos.x).arg(m_pos.y).arg(m_pos.state).arg(m_pos.state+state);
     if(checkPostion(m_pos.x, m_pos.y, m_pos.state + state))
     {
         m_pos.state = m_pos.state + state;
@@ -161,7 +170,7 @@ bool ActiveBlock::checkPostion(int x, int y, int state)
                 return false;
         }//检测底边界
     }
-
+    xMove = x-(TABLE_COLUMN_COUNT/2-1);
     for(int i=0; i<TABLE_ROW_COUNT; i++)
     {
         // qDebug()<<i<<m_pos.y;
@@ -169,20 +178,24 @@ bool ActiveBlock::checkPostion(int x, int y, int state)
         {
             for(int j=0; j<blockCheckCount; j++)
             {
-                int y = m_pos.y + (j - blockCheckCount/2)-1;
-                if(y==i)
+                int ty = y + (j - blockCheckCount/2);
+                if(ty==i)
                 {
-                    quint16 temp = blockTable[m_pos.state][j];
+                    quint16 temp = blockTable[state][j];
                     if(xMove>=0)
                         temp = (BIT_CLEAR)&(temp<<(xMove));
                     else
-                        temp = (BIT_CLEAR)&(temp>>(-xMove-1));
+                        temp = (BIT_CLEAR)&(temp>>(-xMove));
+                    qDebug()<<QString("test 0b%1 0b%2 i=%3,j=%4,xMove=%5,x=%6,y=%7,state=%8").arg(temp, 16, 2, QLatin1Char('0'))
+                                    .arg(mp_limitValue[i], 16, 2, QLatin1Char('0'))
+                                    .arg(i).arg(j).arg(xMove).arg(x).arg(ty).arg(state);
                     if((temp&mp_limitValue[i]) != 0)
                     {
-                        qDebug()<<QString("test 0b%1 0b%2 i=%3,j=%4").arg(temp, 16, 2, QLatin1Char('0')).arg(mp_limitValue[i], 16, 2, QLatin1Char('0')).arg(i).arg(j);
+                        qDebug()<<QString("test 0b%1 0b%2 i=%3,j=%4,xMove=%5,x=%6,y=%7,state=%8").arg(temp, 16, 2, QLatin1Char('0'))
+                                        .arg(mp_limitValue[i], 16, 2, QLatin1Char('0'))
+                                        .arg(i).arg(j).arg(xMove).arg(x).arg(ty).arg(state);
                         return false;
                     }
-
                 }
             }
         }
@@ -202,12 +215,21 @@ StaticBlock::~StaticBlock()
     mp_blockValue = NULL;
 }
 
+void StaticBlock::init()
+{
+    for(int i=0; i<TABLE_ROW_COUNT; i++)
+    {
+        mp_blockValue[i] = 0x0000;
+    }
+    m_point = 0;
+}
+
 quint16 *StaticBlock::blockValue()
 {
     return mp_blockValue;
 }
 
-void StaticBlock::appendBlock(quint16 *blockValue)
+bool StaticBlock::appendBlock(quint16 *blockValue)
 {
     for(int i=0; i<TABLE_ROW_COUNT; i++)
     {
@@ -215,6 +237,30 @@ void StaticBlock::appendBlock(quint16 *blockValue)
             continue;
         mp_blockValue[i] = mp_blockValue[i]|blockValue[i];
     }
+    for(int i=0; i<TABLE_ROW_COUNT;)
+    {
+        if(mp_blockValue[i]>=(BIT_CLEAR))
+        {
+            for(int j=i; j<TABLE_ROW_COUNT; j++)
+            {
+                if(j<TABLE_ROW_COUNT-1)
+                    mp_blockValue[j] = mp_blockValue[j+1];
+                else
+                    mp_blockValue[j] = 0x0000;
+            }
+            m_point++;
+        }
+        else
+            i++;
+    }
+    if(mp_blockValue[TABLE_ROW_COUNT-1]!=0)
+        return true;
+    return false;
+}
+
+int StaticBlock::point()
+{
+    return m_point;
 }
 
 void StaticBlock::mixBlockTable(quint16 *srcTable, quint16 *actTable, quint16 *staTable)

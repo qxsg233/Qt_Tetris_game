@@ -4,6 +4,7 @@
 #include <QWidget>
 #include "block.h"
 #include <QTimer>
+#include <QKeyEvent>
 QT_BEGIN_NAMESPACE
 namespace Ui {
 class Widget;
@@ -17,6 +18,7 @@ class Widget : public QWidget
 public:
     Widget(QWidget *parent = nullptr);
     ~Widget();
+    void init();
 private slots:
     void slot_pushButton_start_onClicked();
     void slot_pushButton_down_onClicked();
@@ -30,5 +32,6 @@ private:
     ActiveBlock m_actBlock;
     StaticBlock m_staBlock;
     QTimer m_timer;
+    int m_nextBlockState;
 };
 #endif // WIDGET_H

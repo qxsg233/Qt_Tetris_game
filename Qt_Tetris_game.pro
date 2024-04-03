@@ -11,11 +11,13 @@ CONFIG += c++17
 SOURCES += \
     block.cpp \
     main.cpp \
+    nextblocktablewidget.cpp \
     tetristablewidget.cpp \
     widget.cpp
 
 HEADERS += \
     block.h \
+    nextblocktablewidget.h \
     tetristablewidget.h \
     widget.h
 

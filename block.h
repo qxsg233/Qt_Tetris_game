@@ -69,7 +69,8 @@ class ActiveBlock
 public:
     ActiveBlock();
     ~ActiveBlock();
-    void updateNewBlock();
+    void init();
+    void updateNewBlock(int state);
     bool blockDown();
     void blockLeft();
     void blockRight();
@@ -91,11 +92,14 @@ class StaticBlock
 public:
     StaticBlock();
     ~StaticBlock();
+    void init();
     quint16* blockValue();
-    void appendBlock(quint16* blockValue);
+    bool appendBlock(quint16* blockValue);
+    int point();
     static void mixBlockTable(quint16* srcTable, quint16* actTable, quint16* staTable);
 private:
     quint16* mp_blockValue;
+    int m_point;
 };
 
 
