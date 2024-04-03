@@ -7,9 +7,11 @@
 ActiveBlock::ActiveBlock()
 {
     mp_blockValue = new quint16[TABLE_ROW_COUNT]{0};
+    mp_limitValue = new quint16[TABLE_ROW_COUNT]{0};
     for(int i=0; i<TABLE_ROW_COUNT; i++)
     {
         mp_blockValue[i] = 0x00;
+        mp_limitValue[i] = 0x00;
     }
     // qDebug()<<QString("%1").arg(BIT_CLEAR, 16, 2, QLatin1Char('0'))<<sizeof(quint16);
 }
@@ -18,6 +20,8 @@ ActiveBlock::~ActiveBlock()
 {
     delete[] mp_blockValue;
     mp_blockValue = NULL;
+    delete[] mp_limitValue;
+    mp_limitValue = NULL;
 }
 
 void ActiveBlock::updateNewBlock()
@@ -28,16 +32,18 @@ void ActiveBlock::updateNewBlock()
     updateBlockValue();
 }
 
-void ActiveBlock::blockDown()
+bool ActiveBlock::blockDown()
 {
     if(checkPostion(m_pos.x, m_pos.y-1, m_pos.state))
     {
         m_pos.y = m_pos.y - 1;
         updateBlockValue();
+        return true;
     }
     else
     {
-        updateNewBlock();
+        // updateNewBlock();
+        return false;
     }
 }
 
@@ -78,6 +84,14 @@ void ActiveBlock::blockRevolve()
 quint16 *ActiveBlock::blockValue()
 {
     return mp_blockValue;
+}
+
+void ActiveBlock::updateLimit(quint16 *limitTable)
+{
+    for(int i=0; i<TABLE_ROW_COUNT; i++)
+    {
+        mp_limitValue[i] = limitTable[i];
+    }
 }
 
 void ActiveBlock::printValue()
@@ -145,8 +159,35 @@ bool ActiveBlock::checkPostion(int x, int y, int state)
         {
             if(y-(blockCheckCount/2-i)<0)
                 return false;
+        }//检测底边界
+    }
+
+    for(int i=0; i<TABLE_ROW_COUNT; i++)
+    {
+        // qDebug()<<i<<m_pos.y;
+        if(mp_limitValue[i]!=0)
+        {
+            for(int j=0; j<blockCheckCount; j++)
+            {
+                int y = m_pos.y + (j - blockCheckCount/2)-1;
+                if(y==i)
+                {
+                    quint16 temp = blockTable[m_pos.state][j];
+                    if(xMove>=0)
+                        temp = (BIT_CLEAR)&(temp<<(xMove));
+                    else
+                        temp = (BIT_CLEAR)&(temp>>(-xMove-1));
+                    if((temp&mp_limitValue[i]) != 0)
+                    {
+                        qDebug()<<QString("test 0b%1 0b%2 i=%3,j=%4").arg(temp, 16, 2, QLatin1Char('0')).arg(mp_limitValue[i], 16, 2, QLatin1Char('0')).arg(i).arg(j);
+                        return false;
+                    }
+
+                }
+            }
         }
-    }//检测底边界
+    }
+
     return true;
 }
 
@@ -159,4 +200,27 @@ StaticBlock::~StaticBlock()
 {
     delete[] mp_blockValue;
     mp_blockValue = NULL;
+}
+
+quint16 *StaticBlock::blockValue()
+{
+    return mp_blockValue;
+}
+
+void StaticBlock::appendBlock(quint16 *blockValue)
+{
+    for(int i=0; i<TABLE_ROW_COUNT; i++)
+    {
+        if(blockValue[i] == 0)
+            continue;
+        mp_blockValue[i] = mp_blockValue[i]|blockValue[i];
+    }
+}
+
+void StaticBlock::mixBlockTable(quint16 *srcTable, quint16 *actTable, quint16 *staTable)
+{
+    for(int i=0; i<TABLE_ROW_COUNT; i++)
+    {
+        srcTable[i] = actTable[i]|staTable[i];
+    }
 }

@@ -70,17 +70,19 @@ public:
     ActiveBlock();
     ~ActiveBlock();
     void updateNewBlock();
-    void blockDown();
+    bool blockDown();
     void blockLeft();
     void blockRight();
     void blockRevolve();
     quint16* blockValue();
+    void updateLimit(quint16* limitTable);
     void printValue();
 private:
     void updateBlockValue();
     bool checkPostion(int x, int y, int state);
 private:
     quint16* mp_blockValue;
+    quint16* mp_limitValue;
     BlockPosion m_pos;
 };
 
@@ -89,8 +91,13 @@ class StaticBlock
 public:
     StaticBlock();
     ~StaticBlock();
+    quint16* blockValue();
+    void appendBlock(quint16* blockValue);
+    static void mixBlockTable(quint16* srcTable, quint16* actTable, quint16* staTable);
 private:
     quint16* mp_blockValue;
 };
+
+
 
 #endif // BLOCK_H
